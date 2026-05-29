@@ -1,0 +1,91 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Structure to represent an item
+typedef struct {
+    int id;
+    double weight;
+    double value;
+    double ratio;
+} Item;
+
+int main() {
+    int n;
+    double capacity;
+
+    printf("Enter the number of items: ");
+    if (scanf("%d", &n) != 1 || n <= 0) {
+        printf("Invalid number of items.\n");
+        return 1;
+    }
+
+    Item *items = (Item *)malloc(n * sizeof(Item));
+    if (items == NULL) {
+        printf("Memory allocation failed!\n");
+        return 1;
+    }
+
+    printf("Enter the values of the items:\n");
+    for (int i = 0; i < n; i++) {
+        items[i].id = i + 1; // 1-indexed for reader display
+        scanf("%lf", &items[i].value);
+    }
+
+    printf("Enter the weights of the items:\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%lf", &items[i].weight);
+        // Calculate value-to-weight ratio
+        if (items[i].weight > 0) {
+            items[i].ratio = items[i].value / items[i].weight;
+        } else {
+            items[i].ratio = 0;
+        }
+    }
+
+    printf("Enter the maximum capacity of the knapsack: ");
+    scanf("%lf", &capacity);
+
+    // Sort items based on ratio in descending order using Bubble Sort
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (items[j].ratio < items[j + 1].ratio) {
+                Item temp = items[j];
+                items[j] = items[j + 1];
+                items[j + 1] = temp;
+            }
+        }
+    }
+
+    double total_value = 0.0;
+    double current_weight = 0.0;
+
+    printf("\nItems fractionally selected:\n");
+    printf("Item ID \t Taken Weight \t Taken Value\n");
+    printf("---------------------------------------------\n");
+
+    for (int i = 0; i < n; i++) {
+        // If adding the whole item won't overflow the knapsack
+        if (current_weight + items[i].weight <= capacity) {
+            current_weight += items[i].weight;
+            total_value += items[i].value;
+            printf("%d \t\t %.2f \t\t %.2f (100%%)\n", items[i].id, items[i].weight, items[i].value);
+        } 
+        // If knapsack cannot take the whole item, take the remaining fraction
+        else {
+            double remaining_capacity = capacity - current_weight;
+            double fraction = remaining_capacity / items[i].weight;
+            double value_taken = items[i].value * fraction;
+
+            total_value += value_taken;
+            current_weight += remaining_capacity;
+
+            printf("%d \t\t %.2f \t\t %.2f (%.1f%%)\n", items[i].id, remaining_capacity, value_taken, fraction * 100);
+            break; // Knapsack is fully maxed out now
+        }
+    }
+
+    printf("\nMaximum total value in the knapsack = %.2f\n", total_value);
+
+    free(items);
+    return 0;
+}
